@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.*?>
+
+<AnchorPane xmlns:fx="http://javafx.com/fxml" fx:controller="org.uoc.group.groupassignment.HelloController"
+            style="-fx-background-image: url('background.jpg'); -fx-background-size: cover; -fx-background-position: center; -fx-background-repeat: no-repeat;">
+    <children>
+        <!-- Upload Button -->
+        <Button fx:id="uploadButton" text="Upload CSV" onAction="#onUploadButtonClick"
+                AnchorPane.leftAnchor="100.0" AnchorPane.topAnchor="50.0"
+                prefWidth="200"
+        style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10px; -fx-text-alignment: center;"/>
+
+        <!-- Column Selection ComboBox -->
+        <ComboBox fx:id="columnComboBox"
+                  AnchorPane.leftAnchor="100.0" AnchorPane.topAnchor="100.0"
+                  prefWidth="200"
+        style="-fx-background-color: #ffffff; -fx-font-size: 14px; -fx-text-fill: black;"/>
+
+        <!-- Sorting Algorithm ComboBox -->
+        <ComboBox fx:id="algorithmComboBox"
+                  AnchorPane.leftAnchor="100.0" AnchorPane.topAnchor="150.0"
+                  prefWidth="200"
+        style="-fx-background-color: #ffffff; -fx-font-size: 14px; -fx-text-fill: black;"/>
+
+        <!-- Sort Button -->
+        <Button fx:id="sortButton" text="Sort" onAction="#onSortButtonClick"
+                AnchorPane.leftAnchor="100.0" AnchorPane.topAnchor="200.0"
+                prefWidth="200"
+        style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10px; -fx-text-alignment: center;"/>
+
+        <!-- Result Label -->
+        <Label fx:id="resultLabel"
+               AnchorPane.leftAnchor="100.0" AnchorPane.topAnchor="250.0"
+               style="-fx-text-fill: black; -fx-font-size: 14px; -fx-text-alignment: center;"/>
+    </children>
+</AnchorPane>
