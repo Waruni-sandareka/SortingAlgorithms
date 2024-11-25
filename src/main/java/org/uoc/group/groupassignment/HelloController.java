@@ -34,8 +34,8 @@ public class HelloController {
     @FXML
     private Button uploadButton; // To trigger file upload
 
-    private List<List<String>> dataset = new ArrayList<>(); // Store CSV data
-    private List<String> columnNames = new ArrayList<>(); // Store column names
+    private final List<List<String>> dataset = new ArrayList<>(); // Store CSV data
+    private final List<String> columnNames = new ArrayList<>(); // Store column names
 
     @FXML
     public void initialize() {
@@ -171,10 +171,7 @@ public class HelloController {
         double duration = (endTime - startTime) / 1_000_000.0; // Time in milliseconds
 
         // Display the sorted data and execution time for the selected algorithm
-        resultLabel.setText(
-                "Sorted Data: " + sortedData +
-                        "\nExecution Time (" + selectedAlgorithm + "): " + duration + " ms"
-        );
+        resultLabel.setText("Sorted Data: " + sortedData + "\nExecution Time (" + selectedAlgorithm + "): " + duration + " ms");
     }
 
     // Find the best sorting method and display its details
@@ -219,19 +216,14 @@ public class HelloController {
         measureSortingTime("Heap Sort", columnData, executionTimes, sortedResults);
 
         // Find the best-performing algorithm
-        String bestAlgorithm = executionTimes.entrySet()
-                .stream()
-                .min(Map.Entry.comparingByValue())
-                .map(Map.Entry::getKey)
-                .orElse("None");
+        String bestAlgorithm = executionTimes.entrySet().stream().min(Map.Entry.comparingByValue()).map(Map.Entry::getKey).orElse("None");
 
         double bestTime = executionTimes.getOrDefault(bestAlgorithm, Double.MAX_VALUE);
 
         // Display execution times and the best-performing algorithm
         StringBuilder result = new StringBuilder("Execution Times:\n");
         executionTimes.forEach((algorithm, time) -> result.append(algorithm).append(": ").append(time).append(" ms\n"));
-        result.append("\nBest Performing Algorithm: ").append(bestAlgorithm)
-                .append(" (").append(bestTime).append(" ms)");
+        result.append("\nBest Performing Algorithm: ").append(bestAlgorithm).append(" (").append(bestTime).append(" ms)");
 
         // Display the sorted result of the best algorithm
         List<Integer> bestSortedData = sortedResults.get(bestAlgorithm);
