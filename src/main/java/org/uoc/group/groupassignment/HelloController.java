@@ -17,22 +17,10 @@ public class HelloController {
     private Label resultLabel; // To display sorted result
 
     @FXML
-    private Label preConditionLabel; // Display Pre Conditions
-
-    @FXML
-    private TextField inputTextField; // To input unsorted numbers
-
-    @FXML
     private ComboBox<String> algorithmComboBox; // To choose sorting algorithm
 
     @FXML
     private ComboBox<String> columnComboBox; // To select column for sorting
-
-    @FXML
-    private Button sortButton; // To trigger sorting
-
-    @FXML
-    private Button uploadButton; // To trigger file upload
 
     private final List<List<String>> dataset = new ArrayList<>(); // Store CSV data
     private final List<String> columnNames = new ArrayList<>(); // Store column names
