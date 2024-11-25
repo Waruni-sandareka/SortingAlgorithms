@@ -17,6 +17,9 @@ public class HelloController {
     private Label resultLabel; // To display sorted result
 
     @FXML
+    private Label preConditionLabel; // Display Pre Conditions
+
+    @FXML
     private TextField inputTextField; // To input unsorted numbers
 
     @FXML
@@ -47,6 +50,12 @@ public class HelloController {
         File file = fileChooser.showOpenDialog(new Stage());
 
         if (file != null) {
+            // Check if the file is of type CSV
+            if (!file.getName().toLowerCase().endsWith(".csv")) {
+                resultLabel.setText("Invalid file type. Please upload a CSV file.");
+                return; // Exit the method if it's not a CSV
+            }
+
             try {
                 // Read all lines from the CSV file
                 List<String> lines = Files.readAllLines(Paths.get(file.getAbsolutePath()));
@@ -78,9 +87,34 @@ public class HelloController {
                 System.out.println("Column Names: " + columnNames);
                 System.out.println("Dataset: " + dataset);
 
-                // Update the ComboBox with column names
+                // Filter only numeric columns
+                List<String> numericColumns = new ArrayList<>();
+                for (int col = 0; col < columnNames.size(); col++) {
+                    boolean isNumeric = true;
+
+                    // Check if all rows (except the header) have numeric values in this column
+                    for (int row = 1; row < dataset.size(); row++) {
+                        String value = dataset.get(row).get(col).trim();
+                        if (!value.matches("-?\\d+(\\.\\d+)?")) { // Regex for integer or decimal
+                            isNumeric = false;
+                            break;
+                        }
+                    }
+
+                    if (isNumeric) {
+                        numericColumns.add(columnNames.get(col));
+                    }
+                }
+
+                // Update the ComboBox with numeric column names
                 columnComboBox.getItems().clear();
-                columnComboBox.getItems().addAll(columnNames);
+                columnComboBox.getItems().addAll(numericColumns);
+
+                if (numericColumns.isEmpty()) {
+                    resultLabel.setText("No numeric columns found.");
+                } else {
+                    resultLabel.setText("File uploaded successfully!");
+                }
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -89,9 +123,10 @@ public class HelloController {
         }
     }
 
-    // Sort and display the result
+    // Sort and display the result for the selected algorithm
     @FXML
     protected void onSortButtonClick() {
+        String selectedAlgorithm = algorithmComboBox.getValue();
         String selectedColumn = columnComboBox.getValue();
         int columnIndex = columnNames.indexOf(selectedColumn);
 
@@ -102,18 +137,15 @@ public class HelloController {
 
         List<Integer> columnData = new ArrayList<>();
         for (List<String> row : dataset) {
-            String cell = row.get(columnIndex).trim(); // Trim whitespace
+            String cell = row.get(columnIndex).trim();
 
-            // Skip empty values
             if (cell.isEmpty()) {
                 continue;
             }
 
             try {
-                // Attempt to parse the column data as integers
                 columnData.add(Integer.parseInt(cell));
             } catch (NumberFormatException e) {
-                // If the value is not numeric, skip this row and print a warning
                 System.out.println("Skipping invalid data: " + cell);
             }
         }
@@ -123,19 +155,108 @@ public class HelloController {
             return;
         }
 
-        // Perform sorting and measure time
+        // Measure execution time for the selected algorithm
+        List<Integer> dataCopy = new ArrayList<>(columnData); // Copy data to avoid modifying original
         long startTime = System.nanoTime();
-        List<Integer> sortedData = switch (algorithmComboBox.getValue()) {
-            case "Insertion Sort" -> SortingAlgorithms.insertionSort(columnData);
-            case "Shell Sort" -> SortingAlgorithms.shellSort(columnData);
-            case "Merge Sort" -> SortingAlgorithms.mergeSort(columnData);
-            case "Quick Sort" -> SortingAlgorithms.quickSort(columnData);
-            case "Heap Sort" -> SortingAlgorithms.heapSort(columnData);
-            default -> columnData;
+        List<Integer> sortedData = switch (selectedAlgorithm) {
+            case "Insertion Sort" -> SortingAlgorithms.insertionSort(dataCopy);
+            case "Shell Sort" -> SortingAlgorithms.shellSort(dataCopy);
+            case "Merge Sort" -> SortingAlgorithms.mergeSort(dataCopy);
+            case "Quick Sort" -> SortingAlgorithms.quickSort(dataCopy);
+            case "Heap Sort" -> SortingAlgorithms.heapSort(dataCopy);
+            default -> dataCopy;
         };
         long endTime = System.nanoTime();
 
         double duration = (endTime - startTime) / 1_000_000.0; // Time in milliseconds
-        resultLabel.setText("Sorted: " + sortedData + "\nExecution Time: " + duration + " ms");
+
+        // Display the sorted data and execution time for the selected algorithm
+        resultLabel.setText(
+                "Sorted Data: " + sortedData +
+                        "\nExecution Time (" + selectedAlgorithm + "): " + duration + " ms"
+        );
+    }
+
+    // Find the best sorting method and display its details
+    @FXML
+    protected void onFindBestMethodButtonClick() {
+        String selectedColumn = columnComboBox.getValue();
+        int columnIndex = columnNames.indexOf(selectedColumn);
+
+        if (columnIndex == -1) {
+            resultLabel.setText("Please select a valid column.");
+            return;
+        }
+
+        List<Integer> columnData = new ArrayList<>();
+        for (List<String> row : dataset) {
+            String cell = row.get(columnIndex).trim();
+
+            if (cell.isEmpty()) {
+                continue;
+            }
+
+            try {
+                columnData.add(Integer.parseInt(cell));
+            } catch (NumberFormatException e) {
+                System.out.println("Skipping invalid data: " + cell);
+            }
+        }
+
+        if (columnData.isEmpty()) {
+            resultLabel.setText("No valid numeric data found in the selected column.");
+            return;
+        }
+
+        // Measure execution times for all algorithms
+        Map<String, Double> executionTimes = new LinkedHashMap<>();
+        Map<String, List<Integer>> sortedResults = new LinkedHashMap<>();
+
+        measureSortingTime("Insertion Sort", columnData, executionTimes, sortedResults);
+        measureSortingTime("Shell Sort", columnData, executionTimes, sortedResults);
+        measureSortingTime("Merge Sort", columnData, executionTimes, sortedResults);
+        measureSortingTime("Quick Sort", columnData, executionTimes, sortedResults);
+        measureSortingTime("Heap Sort", columnData, executionTimes, sortedResults);
+
+        // Find the best-performing algorithm
+        String bestAlgorithm = executionTimes.entrySet()
+                .stream()
+                .min(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse("None");
+
+        double bestTime = executionTimes.getOrDefault(bestAlgorithm, Double.MAX_VALUE);
+
+        // Display execution times and the best-performing algorithm
+        StringBuilder result = new StringBuilder("Execution Times:\n");
+        executionTimes.forEach((algorithm, time) -> result.append(algorithm).append(": ").append(time).append(" ms\n"));
+        result.append("\nBest Performing Algorithm: ").append(bestAlgorithm)
+                .append(" (").append(bestTime).append(" ms)");
+
+        // Display the sorted result of the best algorithm
+        List<Integer> bestSortedData = sortedResults.get(bestAlgorithm);
+        result.append("\n\nSorted Data (").append(bestAlgorithm).append("): ").append(bestSortedData);
+
+        resultLabel.setText(result.toString());
+    }
+
+    // Measure sorting execution time and store results
+    private void measureSortingTime(String algorithm, List<Integer> data, Map<String, Double> times, Map<String, List<Integer>> results) {
+        List<Integer> dataCopy = new ArrayList<>(data);
+
+        long startTime = System.nanoTime();
+        List<Integer> sortedData = switch (algorithm) {
+            case "Insertion Sort" -> SortingAlgorithms.insertionSort(dataCopy);
+            case "Shell Sort" -> SortingAlgorithms.shellSort(dataCopy);
+            case "Merge Sort" -> SortingAlgorithms.mergeSort(dataCopy);
+            case "Quick Sort" -> SortingAlgorithms.quickSort(dataCopy);
+            case "Heap Sort" -> SortingAlgorithms.heapSort(dataCopy);
+            default -> dataCopy;
+        };
+        long endTime = System.nanoTime();
+
+        double duration = (endTime - startTime) / 1_000_000.0; // Time in milliseconds
+        times.put(algorithm, duration);
+        results.put(algorithm, sortedData);
     }
 }
